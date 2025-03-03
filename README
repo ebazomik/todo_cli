@@ -1,0 +1,3 @@
+For compile with sqlite3:
+
+gcc main.c sqlite3.c -lpthread -o todo-cli
