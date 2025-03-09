@@ -1,3 +1,2 @@
-src/TODO
 src/todo-cli
-src/todo_db
+src/todo.db
