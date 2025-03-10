@@ -2,16 +2,19 @@
 #include "stdio.h"
 #include <string.h>
 
+#define CLEAR_SCREEN printf("\033c");
+
 int main() {
   sqlite3 *db;
   char *err_msg = 0;
-  char command[8];
-  int prg_exit = 0;
+  char command[10];
+  char tobe_completed[15] = "TO BE COMPLETED";
+  char state_completed[9] = "COMPLETED";
 
   int oc = sqlite3_open("todo.db", &db);
 
   if (oc != SQLITE_OK) {
-    printf("Errore nell'apertura del db %s \n", sqlite3_errmsg(db));
+    printf("Error on opening db %s \n", sqlite3_errmsg(db));
     return 1;
   }
 
@@ -29,7 +32,7 @@ int main() {
     return 1;
   }
 
-  printf("\033c");
+  CLEAR_SCREEN;
 
   printf("What do you want to do? \n");
   printf("[show] - Show all TODOS (if exists) \n");
@@ -42,40 +45,76 @@ int main() {
 
   int command_match;
 
-  if (strcmp(command, "show")) {
+  printf("command %s", command);
+
+  // show
+  if (!strcmp(command, "show")) {
     command_match = 1;
-    // show
   }
 
-  if (strcmp(command, "create")) {
+  // create
+  if (!strcmp(command, "create")) {
     command_match = 1;
-    // create
+
+    char todo[100];
+    CLEAR_SCREEN;
+
+    printf("Write your TODO: \n");
+    // read up to newline
+    scanf(" %[^\n]", todo);
+
+    const char create_todo[] =
+        "INSERT INTO todos (description, status) values (?, ?);";
+    sqlite3_stmt *stmt;
+    oc = sqlite3_prepare(db, create_todo, -1, &stmt, 0);
+
+    if (oc != SQLITE_OK) {
+      sqlite3_close(db);
+      printf("Error on insert todo %s \n", sqlite3_errmsg(db));
+      return 1;
+    }
+
+    sqlite3_bind_text(stmt, 1, todo, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, tobe_completed, -1, SQLITE_STATIC);
+
+    oc = sqlite3_step(stmt);
+    if (oc != SQLITE_DONE) {
+      printf("Error during insertion %s \n", sqlite3_errmsg(db));
+    } else {
+      CLEAR_SCREEN;
+      printf("TODO insert correctly (press enter to continue)");
+      scanf("");
+    }
   }
 
-  if (strcmp(command, "edit")) {
+  if (!strcmp(command, "edit")) {
+    CLEAR_SCREEN;
     command_match = 1;
     // edit
   }
 
-  if (strcmp(command, "delete")) {
+  if (!strcmp(command, "delete")) {
+    CLEAR_SCREEN;
     command_match = 1;
     // delete
   }
 
-  if (strcmp(command, "complete")) {
+  if (!strcmp(command, "complete")) {
+    CLEAR_SCREEN;
     command_match = 1;
     // complete
   }
 
-  if (strcmp(command, "reset")) {
+  if (!strcmp(command, "reset")) {
+    CLEAR_SCREEN;
     command_match = 1;
     // reset
   }
 
   if (command_match == 0) {
+    CLEAR_SCREEN;
     // error on insert option
     printf("Comand not found");
-    prg_exit = 1;
   }
 
   sqlite3_close(db);
