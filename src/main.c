@@ -34,15 +34,15 @@ select_options:
 
   printf("\n");
 
-  printf("Help -- [create] | [edit] | [delete] | [complete] | [reset] | [quit] \n\n");
+  printf(" Help -- [create] | [edit] | [delete] | [complete] | [reset] | [quit] \n\n");
 
   const char all_todo[] = "SELECT * FROM todos WHERE status != '❌';";
   int res = 0;
   sqlite3_stmt *stmt;
   res = sqlite3_prepare_v2(db, all_todo, -1, &stmt, 0);
-  printf("TODOS 🔍 \n \n");
+  printf(" TODOS 🔍 \n \n");
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    printf("| #%s | %s | %s \n", sqlite3_column_text(stmt, 0),
+    printf(" | #%s | %s | %s \n", sqlite3_column_text(stmt, 0),
            sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 1));
   }
   sqlite3_finalize(stmt);
@@ -231,7 +231,7 @@ select_options:
     } else {
       sqlite3_finalize(stmt);
       CLEAR_SCREEN;
-      printf("TODO deleted correctly, press any key to continue");
+      printf("TODO resetted correctly, press any key to continue");
       CLEAR_INPUT;
       getchar();
       goto select_options;
