@@ -43,113 +43,98 @@ int main() {
     return 1;
   }
 
-start_point:
-  if (err_check) err_check = 0;
-  CLEAR_SCREEN;
 
-  printf(" Help -- [create] | [edit] | [delete] | [complete] | [reset] | "
-         "[quit] \n\n");
 
-  show_all_todo(db, all_todo);
-
-  printf("\n\n>");
-  scanf("%s", command);
-
-  if (!strcmp(command, "create")) {
-    char todo[255];
-    printf("Write your TODO:\n\n>");
-    // read up to newline
-    scanf(" %[^\n]", todo);
-
-    sqlite3_stmt *stmt;
-    oc = sqlite3_prepare(db, create_todo, -1, &stmt, 0);
-
-    err_check = check_query_ready(db, oc);
-    if (err_check)
-      goto start_point;
-
-    sqlite3_bind_text(stmt, 1, todo, -1, 0);
-    oc = sqlite3_step(stmt);
-
-    check_query_done(oc, db);
-    sqlite3_finalize(stmt);
-    goto start_point;
-  }
-
-  if (!strcmp(command, "edit")) {
-    int id;
-    char description[255];
-    printf("Enter the #ID of the todo you want to edit \n");
-    printf(">#");
-    scanf("%i", &id);
-    printf("Enter new description for todo nr %i: \n>", id);
-    // read up to newline
-    scanf(" %[^\n]", description);
-
-    sqlite3_stmt *stmt;
-    oc = sqlite3_prepare(db, edit_todo, -1, &stmt, 0);
-
-    err_check = check_query_ready(db, oc);
-    if (err_check){
-	printf("%d\n", err_check);
-	return 1;
-    }
-
-    sqlite3_bind_int(stmt, 1, id);
-    sqlite3_bind_text(stmt, 1, description, -1, 0);
-
-    oc = sqlite3_step(stmt);
-    check_query_done(oc, db);
-    sqlite3_finalize(stmt);
-    goto start_point;
-  }
-
-  if (!strcmp(command, "delete")) {
-    int id;
-    printf("Enter the #ID of the todo you want to delete \n");
-    printf(">#");
-    scanf("%i", &id);
-
-    sqlite3_stmt *stmt;
-    run_query_routine(db, stmt, delete_todo, id);
-    goto start_point;
-  }
-
-  if (!strcmp(command, "complete")) {
-    int id;
-    printf("Enter the #ID of the todo you want to complete \n");
-    printf(">#");
-    scanf("%i", &id);
-
-    sqlite3_stmt *stmt;
-    run_query_routine(db, stmt, complete_todo, id);
-    goto start_point;
-  }
-
-  if (!strcmp(command, "reset")) {
-    int id;
-    printf("Enter the #ID of the todo you want to reset \n");
-    printf(">#");
-    scanf("%i", &id);
-
-    sqlite3_stmt *stmt;
-    run_query_routine(db, stmt, reset_todo, id);
-    goto start_point;
-  }
-
-  if (!strcmp(command, "quit")) {
-    sqlite3_close(db);
+while(1){
+    if(err_check) err_check = 0;
     CLEAR_SCREEN;
-    return 0;
-  }
 
-  CLEAR_SCREEN;
-  printf("Comand not found, press any key to continue");
-  CLEAR_INPUT;
-  getchar();
-  goto start_point;
+    printf("Help -- [create] | [edit] | [delete] | [complete] | [reset] | [quit] \n");
+    show_all_todo(db, all_todo);
+    printf("\n");
+    printf(">");
+    scanf("%s", command);
 
-  return 0;
+    if (!strcmp(command, "create")) {
+        char todo[255];
+        printf("Write your TODO:\n\n>");
+        // read up to newline
+        scanf(" %[^\n]", todo);
+
+        sqlite3_stmt *stmt;
+        oc = sqlite3_prepare(db, create_todo, -1, &stmt, 0);
+
+        err_check = check_query_ready(db, oc);
+        if (err_check){
+            printf("%d\n", err_check);
+        };
+
+        sqlite3_bind_text(stmt, 1, todo, -1, 0);
+        oc = sqlite3_step(stmt);
+
+        check_query_done(oc, db);
+        sqlite3_finalize(stmt);
+    } else if (!strcmp(command, "edit")) {
+        int id;
+        char description[255];
+        printf("Enter the #ID of the todo you want to edit \n");
+        printf(">#");
+        scanf("%i", &id);
+        printf("Enter new description for todo nr %i: \n>", id);
+        // read up to newline
+        scanf(" %[^\n]", description);
+
+        sqlite3_stmt *stmt;
+        oc = sqlite3_prepare(db, edit_todo, -1, &stmt, 0);
+
+        err_check = check_query_ready(db, oc);
+        if (err_check){
+	        printf("%d\n", err_check);
+	        return 1;
+        }
+
+        sqlite3_bind_int(stmt, 1, id);
+        sqlite3_bind_text(stmt, 2, description, -1, SQLITE_STATIC);
+
+        oc = sqlite3_step(stmt);
+        check_query_done(oc, db);
+        sqlite3_finalize(stmt);
+    } else if (!strcmp(command, "delete")) {
+        int id;
+        printf("Enter the #ID of the todo you want to delete \n");
+        printf(">#");
+        scanf("%i", &id);
+
+        sqlite3_stmt *stmt;
+        run_query_routine(db, stmt, delete_todo, id);
+    } else if (!strcmp(command, "complete")) {
+        int id;
+        printf("Enter the #ID of the todo you want to complete \n");
+        printf(">#");
+        scanf("%i", &id);
+
+        sqlite3_stmt *stmt;
+        run_query_routine(db, stmt, complete_todo, id);
+    } else if (!strcmp(command, "reset")) {
+        int id;
+        printf("Enter the #ID of the todo you want to reset \n");
+        printf(">#");
+        scanf("%i", &id);
+
+        sqlite3_stmt *stmt;
+        run_query_routine(db, stmt, reset_todo, id);
+    } else if (!strcmp(command, "quit")) {
+        sqlite3_close(db);
+        CLEAR_SCREEN;
+        return 0;
+    } else {
+        CLEAR_SCREEN;
+        printf("Comand not found, press any key to continue\n");
+        CLEAR_INPUT;
+        getchar(); 
+    }
+}
+
 }
 
 void show_all_todo(sqlite3 *db, char query[]) {
