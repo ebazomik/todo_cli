@@ -1,8 +1,10 @@
 #include "sqlite/sqlite3.h"
-#include "stdio.h"
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
 
-#define CLEAR_SCREEN printf("\033c");
+#define CLEAR_SCREEN write(STDOUT_FILENO, "\033[H\033[J", 6);
 #define CLEAR_INPUT while (getchar() != '\n')
 
 int check_query_ready(sqlite3 *db, int res_from_prepare);
@@ -53,13 +55,16 @@ while(1){
     show_all_todo(db, all_todo);
     printf("\n");
     printf(">");
-    scanf("%s", command);
+    // Limit input to buffer size (command in this case)
+    fgets(command, sizeof(command), stdin);
+    // Remove new line char
+    command[strcspn(command, "\n")] = 0;
 
     if (!strcmp(command, "create")) {
         char todo[255];
         printf("Write your TODO:\n\n>");
         // read up to newline
-        scanf(" %[^\n]", todo);
+	fgets(todo, sizeof(todo), stdin);
 
         sqlite3_stmt *stmt;
         oc = sqlite3_prepare(db, create_todo, -1, &stmt, 0);
@@ -76,13 +81,18 @@ while(1){
         sqlite3_finalize(stmt);
     } else if (!strcmp(command, "edit")) {
         int id;
+	char inputId[10];
         char description[255];
+
         printf("Enter the #ID of the todo you want to edit \n");
         printf(">#");
-        scanf("%i", &id);
+	fgets(inputId, sizeof(inputId), stdin);
+	id = atoi(inputId);
+	// TODO check if atoi return error
+
         printf("Enter new description for todo nr %i: \n>", id);
-        // read up to newline
-        scanf(" %[^\n]", description);
+        fgets(description, sizeof(description), stdin);
+	description[strcspn(description, "\n")] = '\0';
 
         sqlite3_stmt *stmt;
         oc = sqlite3_prepare(db, edit_todo, -1, &stmt, 0);
@@ -92,18 +102,20 @@ while(1){
 	        printf("%d\n", err_check);
 	        return 1;
         }
-
-        sqlite3_bind_int(stmt, 1, id);
-        sqlite3_bind_text(stmt, 2, description, -1, SQLITE_STATIC);
-
+	sqlite3_bind_text(stmt, 1, description, -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 2, id);
+       	
         oc = sqlite3_step(stmt);
         check_query_done(oc, db);
         sqlite3_finalize(stmt);
+
     } else if (!strcmp(command, "delete")) {
         int id;
+	char inputId[10];
         printf("Enter the #ID of the todo you want to delete \n");
         printf(">#");
-        scanf("%i", &id);
+	fgets(inputId, sizeof(inputId), stdin);
+	id = atoi(inputId);
 
         sqlite3_stmt *stmt;
         run_query_routine(db, stmt, delete_todo, id);
